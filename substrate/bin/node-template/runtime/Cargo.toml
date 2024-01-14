@@ -44,6 +44,7 @@ sp-transaction-pool = { path = "../../../primitives/transaction-pool", default-f
 sp-version = { path = "../../../primitives/version", default-features = false, features = ["serde"] }
 serde_json = { version = "1.0.111", default-features = false, features = ["alloc"] }
 sp-genesis-builder = { default-features = false, path = "../../../primitives/genesis-builder" }
+log = { version = "0.4.17", default-features = false }
 
 # Used for the node template's RPCs
 frame-system-rpc-runtime-api = { path = "../../../frame/system/rpc/runtime-api", default-features = false }
@@ -95,6 +96,7 @@ std = [
 	"sp-transaction-pool/std",
 	"sp-version/std",
 	"substrate-wasm-builder",
+	"log/std",
 ]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",

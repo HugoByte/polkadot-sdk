@@ -11,10 +11,12 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
 use std::{sync::Arc, time::Duration};
 
+type HostFunctions = (sp_io::SubstrateHostFunctions, pallet_template::kurtosis::HostFunctions);
+
 pub(crate) type FullClient = sc_service::TFullClient<
 	Block,
 	RuntimeApi,
-	sc_executor::WasmExecutor<sp_io::SubstrateHostFunctions>,
+	sc_executor::WasmExecutor<HostFunctions>,
 >;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
@@ -48,7 +50,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_wasm_executor::<sp_io::SubstrateHostFunctions>(config);
+	let executor = sc_service::new_wasm_executor::<HostFunctions>(config);
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
 			config,
@@ -160,6 +162,13 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 		})?;
 
 	if config.offchain_worker.enabled {
+		let kurtosis_client = pallet_template::kurtosis::KurtosisClient::new();
+		kurtosis_client.initialize(task_manager.spawn_handle());
+
+		if let Ok(key) = keystore_container.keystore().sr25519_generate_new(pallet_template::KEY_TYPE, None) {
+			keystore_container.keystore().insert(pallet_template::KEY_TYPE, "//Kurtosis", &key);
+		};
+		
 		task_manager.spawn_handle().spawn(
 			"offchain-workers-runner",
 			"offchain-worker",
@@ -173,7 +182,11 @@ pub fn new_full(config: Configuration) -> Result<TaskManager, ServiceError> {
 				)),
 				network_provider: network.clone(),
 				enable_http_requests: true,
-				custom_extensions: |_| vec![],
+				custom_extensions: move |_| {
+					vec![Box::new(pallet_template::kurtosis::KurtosisExt::new(
+						kurtosis_client.clone(),
+					)) as Box<_>]
+				},
 			})
 			.run(client.clone(), task_manager.spawn_handle())
 			.boxed(),
