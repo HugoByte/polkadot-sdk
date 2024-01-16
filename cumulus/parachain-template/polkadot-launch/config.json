@@ -1,6 +1,6 @@
 {
 	"relaychain": {
-		"bin": "../../polkadot/target/release/polkadot",
+		"bin": "../../../target/debug/polkadot",
 		"chain": "rococo-local",
 		"nodes": [
 			{
@@ -17,7 +17,7 @@
 	},
 	"parachains": [
 		{
-			"bin": "../target/release/polkadot-parachain",
+			"bin": "../target/debug/polkadot-parachain",
 			"id": "200",
 			"balance": "1000000000000000000000",
 			"nodes": [
@@ -26,6 +26,17 @@
 					"name": "alice",
 					"port": 31200,
 					"flags": [
+						"--force-authoring",
+						"--",
+						"--execution=wasm"
+					]
+				},
+				{
+					"wsPort": 9989,
+					"name": "bob",
+					"port": 31201,
+					"flags": [
+						"--conduit",
 						"--force-authoring",
 						"--",
 						"--execution=wasm"

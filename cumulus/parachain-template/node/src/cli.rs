@@ -68,7 +68,8 @@ pub struct Cli {
 	pub subcommand: Option<Subcommand>,
 
 	#[command(flatten)]
-	pub run: cumulus_client_cli::RunCmd,
+	// pub run: cumulus_client_cli::RunCmd,
+	pub run: ExtendedRunCmd,
 
 	/// Disable automatic hardware benchmarks.
 	///
@@ -112,4 +113,13 @@ impl RelayChainCli {
 			base: clap::Parser::parse_from(relay_chain_args),
 		}
 	}
+}
+
+#[derive(Debug, clap::Parser)]
+pub struct ExtendedRunCmd {
+    #[command(flatten)]
+    pub base: cumulus_client_cli::RunCmd,
+ 
+    #[arg(long = "conduit", default_value = "false")]
+    pub conduit: bool,
 }

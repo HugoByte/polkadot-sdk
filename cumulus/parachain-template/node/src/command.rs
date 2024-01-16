@@ -218,16 +218,22 @@ pub fn run() -> Result<()> {
 		},
 		Some(Subcommand::TryRuntime) => Err("The `try-runtime` subcommand has been migrated to a standalone CLI (https://github.com/paritytech/try-runtime-cli). It is no longer being maintained here and will be removed entirely some time after January 2024. Please remove this subcommand from your runtime and use the standalone CLI.".into()),
 		None => {
-			let runner = cli.create_runner(&cli.run.normalize())?;
-			let collator_options = cli.run.collator_options();
+			let runner = cli.create_runner(&cli.run.base.normalize())?;
+			let collator_options = cli.run.base.collator_options();
 
-			runner.run_node_until_exit(|config| async move {
+			runner.run_node_until_exit(|mut config| async move {
 				let hwbench = (!cli.no_hardware_benchmarks)
 					.then_some(config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
 						sc_sysinfo::gather_hwbench(Some(database_path))
 					}))
 					.flatten();
+
+				if cli.run.conduit{
+					config.offchain_worker.enabled = true;
+				}else{
+					config.offchain_worker.enabled = false;
+				}
 
 				let para_id = chain_spec::Extensions::try_get(&*config.chain_spec)
 					.map(|e| e.para_id)
@@ -252,6 +258,12 @@ pub fn run() -> Result<()> {
 
 				info!("Parachain Account: {parachain_account}");
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
+
+				info!("config : {config:?}");
+				info!("config : {polkadot_config:?}");
+				info!("config : {collator_options:?}");
+				info!("config : {id}");
+				info!("config : {hwbench:?}");
 
 				crate::service::start_parachain_node(
 					config,

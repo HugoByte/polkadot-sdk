@@ -36,6 +36,11 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_keystore::KeystorePtr;
 use substrate_prometheus_endpoint::Registry;
 
+type HostFunctions = (
+    sp_io::SubstrateHostFunctions,
+    pallet_parachain_template::kurtosis::HostFunctions,
+);
+
 /// Native executor type.
 pub struct ParachainNativeExecutor;
 
@@ -51,7 +56,9 @@ impl sc_executor::NativeExecutionDispatch for ParachainNativeExecutor {
 	}
 }
 
-type ParachainExecutor = NativeElseWasmExecutor<ParachainNativeExecutor>;
+// type ParachainExecutor = NativeElseWasmExecutor<ParachainNativeExecutor>;
+type ParachainExecutor = WasmExecutor<HostFunctions>;
+
 
 type ParachainClient = TFullClient<Block, RuntimeApi, ParachainExecutor>;
 
@@ -89,15 +96,16 @@ pub fn new_partial(config: &Configuration) -> Result<Service, sc_service::Error>
 		.default_heap_pages
 		.map_or(DEFAULT_HEAP_ALLOC_STRATEGY, |h| HeapAllocStrategy::Static { extra_pages: h as _ });
 
-	let wasm = WasmExecutor::builder()
-		.with_execution_method(config.wasm_method)
-		.with_onchain_heap_alloc_strategy(heap_pages)
-		.with_offchain_heap_alloc_strategy(heap_pages)
-		.with_max_runtime_instances(config.max_runtime_instances)
-		.with_runtime_cache_size(config.runtime_cache_size)
-		.build();
+	// let wasm = WasmExecutor::builder()
+	// 	.with_execution_method(config.wasm_method)
+	// 	.with_onchain_heap_alloc_strategy(heap_pages)
+	// 	.with_offchain_heap_alloc_strategy(heap_pages)
+	// 	.with_max_runtime_instances(config.max_runtime_instances)
+	// 	.with_runtime_cache_size(config.runtime_cache_size)
+	// 	.build();
 
-	let executor = ParachainExecutor::new_with_wasm_executor(wasm);
+	// let executor = ParachainExecutor::new_with_wasm_executor(wasm);
+	let executor = sc_service::new_wasm_executor::<HostFunctions>(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -197,6 +205,8 @@ async fn start_node_impl(
 
 	if parachain_config.offchain_worker.enabled {
 		use futures::FutureExt;
+		let kurtosis_client = pallet_parachain_template::kurtosis::KurtosisClient::new();
+        kurtosis_client.initialize(task_manager.spawn_handle());
 
 		task_manager.spawn_handle().spawn(
 			"offchain-workers-runner",
@@ -211,7 +221,9 @@ async fn start_node_impl(
 				network_provider: network.clone(),
 				is_validator: parachain_config.role.is_authority(),
 				enable_http_requests: false,
-				custom_extensions: move |_| vec![],
+				custom_extensions: move |_| vec![Box::new(pallet_parachain_template::kurtosis::KurtosisExt::new(
+					kurtosis_client.clone(),
+				)) as Box<_>],
 			})
 			.run(client.clone(), task_manager.spawn_handle())
 			.boxed(),

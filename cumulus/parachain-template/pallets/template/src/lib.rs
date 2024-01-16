@@ -5,6 +5,8 @@
 /// <https://docs.substrate.io/v3/runtime/frame>
 pub use pallet::*;
 
+pub mod kurtosis;
+
 #[cfg(test)]
 mod mock;
 
@@ -56,9 +58,6 @@ pub mod pallet {
 		StorageOverflow,
 	}
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {}
-
 	// Dispatchable functions allows users to interact with the pallet and invoke state changes.
 	// These functions materialize as "extrinsics", which are often compared to transactions.
 	// Dispatchable functions must be annotated with a weight and must return a DispatchResult.
@@ -100,6 +99,22 @@ pub mod pallet {
 					<Something<T>>::put(new);
 					Ok(().into())
 				},
+			}
+		}
+	}
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
+	where
+		<T as frame_system::Config>::RuntimeEvent: From<Event<T>>,
+		<T as frame_system::Config>::RuntimeEvent: TryInto<Event<T>>,
+	{
+		fn offchain_worker(block_number: BlockNumberFor<T>) {
+			log::info!("Hello from pallet-ocw.");
+			for (_index, event) in frame_system::Pallet::<T>::read_events_no_consensus().enumerate()
+			{
+				if let Ok(Event::<T>::SomethingStored(something, who)) = event.event.try_into() {
+					log::info!("Got an event! index: {:?}, something: {:?}, who: {:?}", _index, something, who);
+				}
 			}
 		}
 	}
