@@ -259,12 +259,6 @@ pub fn run() -> Result<()> {
 				info!("Parachain Account: {parachain_account}");
 				info!("Is collating: {}", if config.role.is_authority() { "yes" } else { "no" });
 
-				info!("config : {config:?}");
-				info!("config : {polkadot_config:?}");
-				info!("config : {collator_options:?}");
-				info!("config : {id}");
-				info!("config : {hwbench:?}");
-
 				crate::service::start_parachain_node(
 					config,
 					polkadot_config,

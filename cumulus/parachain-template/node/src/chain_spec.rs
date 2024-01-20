@@ -128,8 +128,8 @@ pub fn local_testnet_config() -> ChainSpec {
 			para_id: 1000,
 		},
 	)
-	.with_name("Local Testnet")
-	.with_id("local_testnet")
+	.with_name("Dwiz Local Testnet")
+	.with_id("dwiz_local_testnet")
 	.with_chain_type(ChainType::Local)
 	.with_genesis_config_patch(testnet_genesis(
 		// initial collators.
@@ -160,7 +160,7 @@ pub fn local_testnet_config() -> ChainSpec {
 		get_account_id_from_seed::<sr25519::Public>("Alice"),
 		1000.into(),
 	))
-	.with_protocol_id("template-local")
+	.with_protocol_id("dwiz-local")
 	.with_properties(properties)
 	.build()
 }
