@@ -25,6 +25,7 @@ serde_json = "1.0.111"
 # Local
 parachain-template-runtime = { path = "../runtime" }
 pallet-parachain-template = { default-features = false, path = "../pallets/template" }
+pallet-parachain-template-rpc = { default-features = false, path = "../pallets/template/rpc" }
 
 # Substrate
 frame-benchmarking = { path = "../../../substrate/frame/benchmarking" }

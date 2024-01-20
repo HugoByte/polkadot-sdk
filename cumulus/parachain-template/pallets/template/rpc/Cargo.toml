@@ -1,0 +1,24 @@
+[package]
+name = "pallet-parachain-template-rpc"
+version = "1.0.0"
+edition = "2021"
+description = 'RPC methods for the template pallet'
+
+[dependencies]
+codec = { package = "parity-scale-codec", version = "3.6.1", default-features = false, features = [
+	"derive",
+] }
+jsonrpsee = { version = "0.16.2", features = ["client-core", "macros", "server"] }
+parking_lot = "0.12.1"
+
+# Substrate packages
+sp-api = { default-features = false,  path = "../../../../../substrate/primitives/api"  }
+sp-blockchain = { default-features = false,  path = "../../../../../substrate/primitives/blockchain"  }
+sp-runtime = { default-features = false,  path = "../../../../../substrate/primitives/runtime"  }
+sp-core = { default-features = false,  path = "../../../../../substrate/primitives/core"  }
+sp-keystore = { default-features = false,  path = "../../../../../substrate/primitives/keystore"  }
+sc-transaction-pool-api = { default-features = false,  path = "../../../../../substrate/client/transaction-pool/api"  }
+sc-rpc-api = { default-features = false,  path = "../../../../../substrate/client/rpc-api"  }
+sp-offchain = { default-features = false,  path = "../../../../../substrate/primitives/offchain"  }
+pallet-parachain-template = { version = "0.1.0", default-features = false, path = "../" }
+

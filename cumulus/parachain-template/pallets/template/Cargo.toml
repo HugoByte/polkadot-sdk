@@ -33,7 +33,7 @@ futures = { version = "0.3.28", default-features = false }
 sp-externalities = { version = "0.19.0",path = "../../../../substrate/primitives/externalities", default-features = false  }
 sp-std = { path = "../../../../substrate/primitives/std",  default-features = false }
 sp-runtime-interface = {  default-features = false,  path = "../../../../substrate/primitives/runtime-interface" }
-
+async-trait = "0.1.77"
 
 # Substrate
 
@@ -55,13 +55,12 @@ std = [
 	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
+	"sp-std/std",
 	"sp-externalities/std",
 	"log/std",
 	"tokio",
 	"kurtosis-sdk",
 	"tonic",
-	"sp-std/std",
-	"sp-runtime/std",
 ]
 try-runtime = [
 	"frame-support/try-runtime",

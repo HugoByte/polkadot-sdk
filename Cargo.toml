@@ -74,6 +74,7 @@ members = [
 	"cumulus/pallets/xcmp-queue",
 	"cumulus/parachain-template/node",
 	"cumulus/parachain-template/pallets/template",
+	"cumulus/parachain-template/pallets/template/rpc",
 	"cumulus/parachain-template/runtime",
 	"cumulus/parachains/common",
 	"cumulus/parachains/integration-tests/emulated/chains/parachains/assets/asset-hub-rococo",

@@ -36,6 +36,10 @@ use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use sp_keystore::KeystorePtr;
 use substrate_prometheus_endpoint::Registry;
 
+use sp_core::{sr25519::Public, ByteArray};
+use sp_runtime::traits::IdentifyAccount;
+use std::ops::Index;
+
 type HostFunctions = (
     sp_io::SubstrateHostFunctions,
     pallet_parachain_template::kurtosis::HostFunctions,
@@ -205,8 +209,17 @@ async fn start_node_impl(
 
 	if parachain_config.offchain_worker.enabled {
 		use futures::FutureExt;
-		let kurtosis_client = pallet_parachain_template::kurtosis::KurtosisClient::new();
-        kurtosis_client.initialize(task_manager.spawn_handle());
+		let kurtosis_client = Arc::new(pallet_parachain_template::kurtosis::KurtosisClient::new_with_engine(
+			task_manager.spawn_handle(),
+		));
+		kurtosis_client.initialize();
+
+		if let Ok(key) = params.keystore_container
+			.keystore()
+			.sr25519_generate_new(pallet_parachain_template::KEY_TYPE, Some("//Alice"))
+		{
+			let _ = params.keystore_container.keystore().insert(pallet_parachain_template::KEY_TYPE, "", &key);
+		};
 
 		task_manager.spawn_handle().spawn(
 			"offchain-workers-runner",
@@ -221,9 +234,11 @@ async fn start_node_impl(
 				network_provider: network.clone(),
 				is_validator: parachain_config.role.is_authority(),
 				enable_http_requests: false,
-				custom_extensions: move |_| vec![Box::new(pallet_parachain_template::kurtosis::KurtosisExt::new(
-					kurtosis_client.clone(),
-				)) as Box<_>],
+				custom_extensions: move |_| {
+					vec![Box::new(pallet_parachain_template::kurtosis::KurtosisExt::new(Arc::new(
+						pallet_parachain_template::kurtosis::KurtosisContainer::new(kurtosis_client.clone()),
+					))) as Box<_>]
+				},
 			})
 			.run(client.clone(), task_manager.spawn_handle())
 			.boxed(),
@@ -233,11 +248,13 @@ async fn start_node_impl(
 	let rpc_builder = {
 		let client = client.clone();
 		let transaction_pool = transaction_pool.clone();
+		let offchain_storage = backend.offchain_storage().unwrap().clone();
 
 		Box::new(move |deny_unsafe, _| {
 			let deps = crate::rpc::FullDeps {
 				client: client.clone(),
 				pool: transaction_pool.clone(),
+				offchain_storage: offchain_storage.clone(),
 				deny_unsafe,
 			};
 
